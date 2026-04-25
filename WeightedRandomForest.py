@@ -58,19 +58,22 @@ class WeightedRandomForest:
             self.feature_indices_per_tree.append(indices)
 
     def predict(self, X):
-        if hasattr(X, "values"):
-            X = X.values
-
         all_probabilities = np.zeros((X.shape[0], len(self.classes_)))
 
         for i in range(len(self.trees)):
             X_subset = X[:, self.feature_indices_per_tree[i]]
-            all_probabilities += self.trees[i].predict_proba(X_subset)
+
+            tree_probs = self.trees[i].predict_proba(X_subset)
+
+            for local_idx, global_class_val in enumerate(self.trees[i].classes_):
+
+                global_idx = np.where(self.classes_ == global_class_val)[0][0]
+
+                all_probabilities[:, global_idx] += tree_probs[:, local_idx]
 
         final_idx = np.argmax(all_probabilities, axis=1)
         return self.classes_[final_idx]
 
-    # --- Persistence Methods ---
 
     def save(self, filename):
         """Saves the entire model state to a file."""

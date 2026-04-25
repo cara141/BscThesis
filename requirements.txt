@@ -8,3 +8,6 @@ matplotlib
 seaborn
 imbalanced-learn
 joblib
+python-dotenv
+requests
+pydot
