@@ -1,5 +1,6 @@
 from email.mime import multipart
 
+import numpy as np
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 
@@ -33,7 +34,7 @@ async def predict_raw(file: UploadFile = File(...)):
 
 @app.post("/predict/features")
 async def predict_features(data: FeatureInput):
-    feature_vector = data.features
+    feature_vector = np.array(data.features)
     try:
         prediction = classifier.predict(feature_vector, genre=data.label)
     except Exception as e:
