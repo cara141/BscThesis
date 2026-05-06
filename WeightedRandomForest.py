@@ -4,7 +4,7 @@ from sklearn.tree import DecisionTreeClassifier
 from concurrent.futures import ThreadPoolExecutor
 
 class WeightedRandomForest:
-    def __init__(self, n_estimators=1500, features_per_other_cat=15, class_weight='balanced', max_workers=4):
+    def __init__(self, n_estimators=500, features_per_other_cat=15, class_weight='balanced', max_workers=4):
         self.n_estimators = n_estimators
         self.features_per_other_cat = features_per_other_cat
         self.class_weight = class_weight

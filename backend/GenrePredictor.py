@@ -33,4 +33,7 @@ class GenrePredictor:
 
         return pred_label[0]
 
+    def get_genre_name(self):
+        return self.genre_name
+
 

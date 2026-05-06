@@ -32,3 +32,6 @@ class MusicGenreClassifier:
 
         else:
             raise ValueError("Genre not recognized")
+
+    def get_classes(self):
+        return list(self.specialists.keys())
