@@ -1,6 +1,6 @@
 import os
 
-from backend.GenrePredictor import GenrePredictor
+from mgc.GenrePredictor import GenrePredictor
 
 
 class MusicGenreClassifier:
@@ -9,7 +9,6 @@ class MusicGenreClassifier:
 
         self.router = GenrePredictor("Router")
         self.router.load_from_directory(self.base_path)
-
         self.specialists = {}
         self._load_all_specialists()
 

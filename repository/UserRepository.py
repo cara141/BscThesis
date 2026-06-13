@@ -24,7 +24,7 @@ class UserRepository:
         except sqlite3.Error as e:
             raise RepositoryException(f"Database initialization failed: {str(e)}")
 
-    def login_user(self, username, password):
+    def find_user(self, username, password):
         with sqlite3.connect(self.db_path) as con:
             cursor = con.cursor()
             cursor.execute('''

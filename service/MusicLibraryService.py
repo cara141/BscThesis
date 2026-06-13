@@ -5,7 +5,7 @@ from domain.Track import Track
 from repository.RepositoryException import RepositoryException
 
 
-class MgcService:
+class MusicLibraryService:
     def __init__(self, user_repo, track_repo):
         self.user_repo = user_repo
         self.track_repo = track_repo
@@ -25,7 +25,7 @@ class MgcService:
     def login(self, username, password) -> Optional[User]:
         """Verifies credentials and returns the User object or None."""
         hashed_pw = self._hash_password(password)
-        return self.user_repo.login_user(username, hashed_pw)
+        return self.user_repo.find_user(username, hashed_pw)
 
     # --- TRACK & CLASSIFICATION ACTIONS ---
 
@@ -53,7 +53,7 @@ class MgcService:
 
     # --- FIND ACTIONS (User-Scoped) ---
 
-    def get_user_history(self, user_id: int) -> List[Track]:
+    def get_user_library(self, user_id: int) -> List[Track]:
         """Returns all tracks for a specific user."""
         return self.track_repo.find_all_by_user(user_id)
 

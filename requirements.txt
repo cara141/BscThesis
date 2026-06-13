@@ -11,3 +11,6 @@ joblib
 python-dotenv
 requests
 pydot
+fastapi
+pydantic
+streamlit

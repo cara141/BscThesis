@@ -3,11 +3,11 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 
-from backend.MusicGenreClassifier import MusicGenreClassifier
-from backend.FeatureExtractor import FeatureExtractor
+from mgc.MusicGenreClassifier import MusicGenreClassifier
+from mgc.FeatureExtractor import FeatureExtractor
 from repository.TrackRepository import TrackRepository
 from repository.UserRepository import UserRepository
-from service.MgcService import MgcService
+from service.MusicLibraryService import MusicLibraryService
 
 # App initialization
 app = FastAPI()
@@ -18,23 +18,23 @@ db_path = "../mgc.db"
 user_repo = UserRepository(db_path)
 track_repo = TrackRepository(db_path)
 
-service = MgcService(user_repo, track_repo)
+service = MusicLibraryService(user_repo, track_repo)
 
 
 # --- Pydantic Schemas ---
 
-class UserRegisterSchema(BaseModel):
+class UserRegisterDto(BaseModel):
     username: str
     email: str
     password: str
 
 
-class UserLoginSchema(BaseModel):
+class UserLoginDto(BaseModel):
     username: str
     password: str
 
 
-class TrackSaveSchema(BaseModel):
+class TrackSaveDto(BaseModel):
     user_id: int
     title: str
     main_genre: str
@@ -42,7 +42,16 @@ class TrackSaveSchema(BaseModel):
     features: List[float]
 
 
-class FeatureInput(BaseModel):
+class TrackUpdateDto(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    main_genre: str
+    sub_genre: str
+    features: List[float]
+
+
+class FeatureInputDto(BaseModel):
     features: List[float]
     label: str
 
@@ -64,7 +73,7 @@ async def predict_raw(file: UploadFile = File(...)):
 
 
 @app.post("/classifier/features")
-async def predict_features(data: FeatureInput):
+async def predict_features(data: FeatureInputDto):
     feature_vector = np.array(data.features)
     try:
         prediction = classifier.predict(feature_vector, genre=data.label)
@@ -84,7 +93,7 @@ async def get_classes():
 # --- User Endpoints ---
 
 @app.post("/users/register")
-async def register(data: UserRegisterSchema):
+async def register(data: UserRegisterDto):
     try:
         user = service.register_user(data.username, data.email, data.password)
         return {"message": "User created", "user_id": user.id}
@@ -93,7 +102,7 @@ async def register(data: UserRegisterSchema):
 
 
 @app.post("/users/login")
-async def login(data: UserLoginSchema):
+async def login(data: UserLoginDto):
     user = service.login(data.username, data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -103,7 +112,7 @@ async def login(data: UserLoginSchema):
 # --- Track Management Endpoints ---
 
 @app.post("/tracks")
-async def save_track(data: TrackSaveSchema):
+async def save_track(data: TrackSaveDto):
     try:
         track = service.add_track(
             data.user_id, data.title, data.main_genre, data.sub_genre, data.features
@@ -125,7 +134,7 @@ async def get_user_history(user_id: int, genre: Optional[str] = None, title: Opt
         elif title:
             tracks = service.search_by_title(user_id, title)
         else:
-            tracks = service.get_user_history(user_id)
+            tracks = service.get_user_library(user_id)
 
         # Convert Domain objects to dicts for JSON serialization
         return [
@@ -148,4 +157,28 @@ async def delete_track(user_id: int, track_id: int):
         service.remove_track(user_id, track_id)
         return {"status": "deleted"}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/tracks")
+async def update_track(data: TrackUpdateDto):
+    """
+    Updates an existing track's metadata.
+    The ID in the body must match an existing record.
+    """
+    try:
+        from domain.Track import Track
+        # Map the schema to the domain object the service expects
+        updated_track = Track(
+            id=data.id,
+            user_id=data.user_id,
+            title=data.title,
+            main_genre=data.main_genre,
+            sub_genre=data.sub_genre,
+            features=data.features
+        )
+
+        service.update_track_info(updated_track)
+        return {"status": "updated", "track_id": data.id}
+    except Exception as e:
+        print(str(e))
         raise HTTPException(status_code=500, detail=str(e))
