@@ -4,6 +4,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from typing import Optional
 
 from config import settings
+from domain.Track import Track
 
 from mgc.MusicGenreClassifier import MusicGenreClassifier
 
@@ -142,17 +143,16 @@ async def delete_track(user_id: int, track_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put("/tracks")
-async def update_track(data: TrackUpdateDto):
+@app.put("/tracks/{user_id}/{track_id}")
+async def update_track(data: TrackUpdateDto, track_id: int, user_id: int):
     """
     Updates an existing track's metadata.
     """
     try:
-        from domain.Track import Track
         # Map the schema to the domain object the service expects
         updated_track = Track(
-            id=data.id,
-            user_id=data.user_id,
+            id=track_id,
+            user_id=user_id,
             title=data.title,
             main_genre=data.main_genre,
             sub_genre=data.sub_genre,

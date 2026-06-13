@@ -79,16 +79,17 @@ def show_library(backend_url):
                 with btn_col1:
                     if st.button("Save All Changes", key=f"save_{track_id}", type="primary"):
                         # only send genre labels from the session state
+                        user_id = st.session_state.user_id
                         update_data = {
                             "id": track_id,
-                            "user_id": st.session_state.user_id,
+                            "user_id": user_id,
                             "title": new_title,
                             "main_genre": current_main,
                             "sub_genre": current_sub,
                             "features": track['features']
                         }
 
-                        put_resp = requests.put(f"{backend_url}/tracks", json=update_data)
+                        put_resp = requests.put(f"{backend_url}/tracks/{user_id}/{track_id}", json=update_data)
                         if put_resp.status_code == 200:
                             st.session_state.edited_tracks.pop(f"main_{track_id}", None)
                             st.session_state.edited_tracks.pop(f"sub_{track_id}", None)
