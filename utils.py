@@ -16,7 +16,7 @@ import ast
 NB_AUDIO_SAMPLES = 1321967
 SAMPLING_RATE = 44100
 
-# Load the environment from the .env file.
+# Load the environment from the .env-example file.
 dotenv.load_dotenv(dotenv.find_dotenv())
 
 

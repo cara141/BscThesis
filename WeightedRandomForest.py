@@ -43,6 +43,7 @@ class WeightedRandomForest:
         return tree, selected_indices
 
     def fit(self, X, y):
+        """Trains the predictor on features X and labels y."""
         self.trees = []
         self.feature_indices_per_tree = []
         self.classes_ = np.unique(y)
@@ -58,6 +59,7 @@ class WeightedRandomForest:
             self.feature_indices_per_tree.append(indices)
 
     def predict(self, X):
+        """Returns predicted class label for X."""
         all_probabilities = np.zeros((X.shape[0], len(self.classes_)))
 
         for i in range(len(self.trees)):

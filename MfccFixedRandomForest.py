@@ -45,7 +45,7 @@ class MfccFixedRandomForest:
         for i, tree in enumerate(self.trees):
             X_subset = X[:, self.feature_indices_per_tree[i]]
 
-            prediction = tree.predict(X_subset)
+            prediction = tree.predict(X_subset, None)
             tree_predictions.append(prediction)
 
         final_predictions, count = stats.mode(np.array(tree_predictions), axis=0)

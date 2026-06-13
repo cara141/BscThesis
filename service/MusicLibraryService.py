@@ -10,7 +10,7 @@ class MusicLibraryService:
         self.user_repo = user_repo
         self.track_repo = track_repo
 
-    # --- USER ACTIONS ---
+    # user operations
 
     def _hash_password(self, password: str) -> str:
         """Private helper to ensure we never handle plain-text passwords."""
@@ -27,11 +27,11 @@ class MusicLibraryService:
         hashed_pw = self._hash_password(password)
         return self.user_repo.find_user(username, hashed_pw)
 
-    # --- TRACK & CLASSIFICATION ACTIONS ---
+    # track CRUD operations
 
     def add_track(self, user_id: int, title: str, main_genre: str, sub_genre: str, features: List[float]) -> Track:
+        """Adds a track to a user."""
 
-        # Step 3: Create Track Domain Object
         new_track = Track(
             user_id=user_id,
             title=title,
@@ -40,7 +40,6 @@ class MusicLibraryService:
             features=features
         )
 
-        # Step 4: Save to Database
         return self.track_repo.add(new_track)
 
     def update_track_info(self, track: Track):
@@ -51,7 +50,7 @@ class MusicLibraryService:
         """Deletes a track from history."""
         return self.track_repo.delete(user_id, track_id)
 
-    # --- FIND ACTIONS (User-Scoped) ---
+    # track search operations
 
     def get_user_library(self, user_id: int) -> List[Track]:
         """Returns all tracks for a specific user."""

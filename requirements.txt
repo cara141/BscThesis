@@ -14,3 +14,4 @@ pydot
 fastapi
 pydantic
 streamlit
+pydantic-settings

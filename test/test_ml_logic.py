@@ -11,14 +11,13 @@ def extractor():
 
 
 def test_feature_extraction_shape(extractor):
-    # Create 1 second of white noise (44100 samples)
+    # creates 1 second of white noise (44100 samples)
     fake_audio = np.random.uniform(-1, 1, 44100).astype(np.float32)
 
-    # We need to mock librosa.load because it expects a file/path
     with patch('librosa.load') as mock_load:
         mock_load.return_value = (fake_audio, 44100)
 
-        # Pass dummy bytes
+        # extraction is done on the random audio
         features = extractor.extract_from_bytes(b"fake_data")
 
         assert isinstance(features, np.ndarray)
@@ -27,13 +26,12 @@ def test_feature_extraction_shape(extractor):
 
 
 def test_classifier():
-    # Mocking the GenrePredictor to avoid loading heavy physical models during unit tests
     with patch('mgc.GenrePredictor.GenrePredictor') as MockPredictor:
-        # Setup mock instances
+        # setup mock instances
         mock_router = MockPredictor.return_value
         mock_router.predict.return_value = "Rock"
 
-        # Mock directory structure for specialists
+        # mock directory structure for specialists
         with patch('os.listdir') as mock_list:
             mock_list.return_value = ["Router", "Rock", "Pop"]
             with patch('os.path.isdir') as mock_isdir:
@@ -44,7 +42,7 @@ def test_classifier():
                 fake_features = np.zeros(518)
 
                 try:
-                    res = classifier.predict(fake_features)
+                    res = classifier.predict(fake_features, None)
                 except Exception as e:
                     assert False
 
@@ -56,4 +54,5 @@ def test_classifier_invalid_genre():
         with patch('os.listdir', return_value=["Router"]):
             classifier = MusicGenreClassifier(base_path="C:\\Users\\cezar\\PycharmProjects\\BscThesis\\models")
             with pytest.raises(ValueError, match="Genre not recognized"):
-                classifier.predict(np.zeros(518), genre="NonExistent")
+                # checks if the predictor fails for unknown genres
+                classifier.predict(np.zeros(518), genre_name="NonExistent")

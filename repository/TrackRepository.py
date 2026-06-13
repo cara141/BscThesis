@@ -41,7 +41,8 @@ class TrackRepository:
             raise RepositoryException(f"Database initialization failed: {str(e)}")
 
     def add(self, track: Track) -> Track:
-        # We assume user_id is already set in the track object by the Service layer
+        """Add a track entry to the database"""
+        # we assume user_id is already set in the track object by the Service layer
         try:
             with sqlite3.connect(self.db_path) as con:
                 cursor = con.cursor()
@@ -56,7 +57,7 @@ class TrackRepository:
             raise RepositoryException(f"Error adding track: {e}")
 
     def find_all_by_user(self, user_id: str) -> list[Track]:
-        """Fetch the entire history for a specific user."""
+        """Fetch all tracks for a specific user."""
         with sqlite3.connect(self.db_path) as con:
             cursor = con.cursor()
             cursor.execute("SELECT * FROM tracks WHERE user_id = ?", (user_id,))
@@ -102,7 +103,7 @@ class TrackRepository:
 
         try:
             with sqlite3.connect(self.db_path) as con:
-                # Ensure foreign keys are enabled if you are changing user_id
+                # ensure foreign keys are enabled if you are changing user_id
                 con.execute("PRAGMA foreign_keys = ON;")
                 cursor = con.cursor()
 

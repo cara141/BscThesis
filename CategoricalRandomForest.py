@@ -20,19 +20,19 @@ class CategoricalRandomForest:
 
     def fit(self, X, y):
         for _ in range(self.n_estimators):
-            # 1 Feature selection (features_per_category*no_of_groups = no_of_features_per_tree)
+            # feature selection (features_per_category*no_of_groups = no_of_features_per_tree)
             selected_indices = []
             for group_name, indices in self.groups.items():
                 selection = np.random.choice(indices, self.features_per_category, replace=False)
                 selected_indices.extend(selection)
 
-            # 2 Bootstrap the data
+            # bootstrap the data
             n_samples = X.shape[0]
             bootstrap_idX = np.random.choice(n_samples, n_samples, replace=True)
             X_bootstrap = X[bootstrap_idX][:, selected_indices]
             y_bootstrap = y[bootstrap_idX]
 
-            # 3 Train the tree
+            # train the tree
             tree = DecisionTreeClassifier(max_features=None, class_weight='balanced')
             tree.fit(X_bootstrap, y_bootstrap)
 
@@ -41,12 +41,12 @@ class CategoricalRandomForest:
 
 
     def predict(self, X): # Majority vote
-        # Individual predictions
-        # Aggregate predictions from all trees
+        # individual predictions
+        # aggregate predictions from all trees
         tree_preds = []
         for i, tree in enumerate(self.trees):
             X_subset = X[:, self.feature_indices_per_tree[i]]
-            tree_preds.append(tree.predict(X_subset))
+            tree_preds.append(tree.predict(X_subset, None))
 
-        # Majority vote
+        # majority vote
         return stats.mode(np.array(tree_preds), axis=0)[0]

@@ -1,69 +1,43 @@
 import numpy as np
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
+
+from config import settings
 
 from mgc.MusicGenreClassifier import MusicGenreClassifier
-from mgc.FeatureExtractor import FeatureExtractor
+
 from repository.TrackRepository import TrackRepository
 from repository.UserRepository import UserRepository
+from server.FeatureInputDto import FeatureInputDto
+from server.TrackSaveDto import TrackSaveDto
+from server.TrackUpdateDto import TrackUpdateDto
+from server.UserLoginDto import UserLoginDto
+
+from server.UserRegisterDto import UserRegisterDto
+
+
 from service.MusicLibraryService import MusicLibraryService
 
-# App initialization
+# app initialization
 app = FastAPI()
-extractor = FeatureExtractor()
 classifier = MusicGenreClassifier()
 
-db_path = "../mgc.db"
+db_path = settings.database_path
 user_repo = UserRepository(db_path)
 track_repo = TrackRepository(db_path)
 
 service = MusicLibraryService(user_repo, track_repo)
 
-
-# --- Pydantic Schemas ---
-
-class UserRegisterDto(BaseModel):
-    username: str
-    email: str
-    password: str
-
-
-class UserLoginDto(BaseModel):
-    username: str
-    password: str
-
-
-class TrackSaveDto(BaseModel):
-    user_id: int
-    title: str
-    main_genre: str
-    sub_genre: str
-    features: List[float]
-
-
-class TrackUpdateDto(BaseModel):
-    id: int
-    user_id: int
-    title: str
-    main_genre: str
-    sub_genre: str
-    features: List[float]
-
-
-class FeatureInputDto(BaseModel):
-    features: List[float]
-    label: str
-
-
-# --- Classifier Endpoints ---
-
 @app.post("/classifier/audio")
 async def predict_raw(file: UploadFile = File(...)):
+    """
+    Returns genre prediction based on raw audio along with the extracted features
+    """
     audio_data = await file.read()
     try:
-        feature_vector = extractor.extract_from_bytes(audio_data)
-        prediction = classifier.predict(feature_vector)
+        feature_vector = classifier.extractor.extract_from_bytes(audio_data)
+        prediction = classifier.predict(feature_vector, None)
         return {
             "features": feature_vector.tolist(),
             "label": prediction
@@ -71,12 +45,14 @@ async def predict_raw(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": f"Prediction failed: {str(e)}"}
 
-
 @app.post("/classifier/features")
 async def predict_features(data: FeatureInputDto):
+    """
+    Returns genre prediction based on feature input
+    """
     feature_vector = np.array(data.features)
     try:
-        prediction = classifier.predict(feature_vector, genre=data.label)
+        prediction = classifier.predict(feature_vector, genre_name=data.label)
         return {
             "features": data.features,
             "label": prediction
@@ -84,35 +60,39 @@ async def predict_features(data: FeatureInputDto):
     except Exception as e:
         return {"error": f"Prediction failed: {str(e)}"}
 
-
 @app.get("/classifier/classes")
 async def get_classes():
+    """
+    Returns classes available for classification.
+    """
     return {"classes": classifier.get_classes()}
-
-
-# --- User Endpoints ---
 
 @app.post("/users/register")
 async def register(data: UserRegisterDto):
+    """
+    Creates a new user and returns the user info.
+    """
     try:
         user = service.register_user(data.username, data.email, data.password)
         return {"message": "User created", "user_id": user.id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @app.post("/users/login")
 async def login(data: UserLoginDto):
+    """
+    Authenticates a user and returns the user info.
+    """
     user = service.login(data.username, data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return {"user_id": user.id, "username": user.username}
 
-
-# --- Track Management Endpoints ---
-
 @app.post("/tracks")
 async def save_track(data: TrackSaveDto):
+    """
+    Creates a new track entry in the database.
+    """
     try:
         track = service.add_track(
             data.user_id, data.title, data.main_genre, data.sub_genre, data.features
@@ -153,6 +133,9 @@ async def get_user_history(user_id: int, genre: Optional[str] = None, title: Opt
 
 @app.delete("/tracks/{user_id}/{track_id}")
 async def delete_track(user_id: int, track_id: int):
+    """
+    Deletes a track from the database.
+    """
     try:
         service.remove_track(user_id, track_id)
         return {"status": "deleted"}
@@ -163,7 +146,6 @@ async def delete_track(user_id: int, track_id: int):
 async def update_track(data: TrackUpdateDto):
     """
     Updates an existing track's metadata.
-    The ID in the body must match an existing record.
     """
     try:
         from domain.Track import Track

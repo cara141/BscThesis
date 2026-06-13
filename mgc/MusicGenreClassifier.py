@@ -1,11 +1,14 @@
 import os
 
+from mgc.FeatureExtractor import FeatureExtractor
 from mgc.GenrePredictor import GenrePredictor
 
 
 class MusicGenreClassifier:
     def __init__(self, base_path="../models/"):
         self.base_path = base_path
+
+        self.extractor = FeatureExtractor()
 
         self.router = GenrePredictor("Router")
         self.router.load_from_directory(self.base_path)
@@ -22,12 +25,16 @@ class MusicGenreClassifier:
 
                 self.specialists[entry] = predictor
 
-    def predict(self, raw_features, genre=None):
-        if genre is None:
+    def predict_audio(self, audio_bytes: bytes, genre_name: str = None):
+        feature_vector = self.extractor.extract_from_bytes(audio_bytes)
+        return self.predict(feature_vector, genre_name)
+
+    def predict(self, raw_features, genre_name:str = None):
+        if genre_name is None:
             return self.router.predict(raw_features)
 
-        elif genre in self.specialists:
-            return self.specialists[genre].predict(raw_features)
+        elif genre_name in self.specialists:
+            return self.specialists[genre_name].predict(raw_features)
 
         else:
             raise ValueError("Genre not recognized")

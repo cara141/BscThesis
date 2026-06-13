@@ -25,6 +25,7 @@ class UserRepository:
             raise RepositoryException(f"Database initialization failed: {str(e)}")
 
     def find_user(self, username, password):
+        """Find a user by username and password."""
         with sqlite3.connect(self.db_path) as con:
             cursor = con.cursor()
             cursor.execute('''
@@ -48,6 +49,7 @@ class UserRepository:
             return user
 
     def create(self, user):
+        """Create a new user."""
         try:
             with sqlite3.connect(self.db_path) as con:
                 cursor = con.cursor()
